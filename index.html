@@ -5,8 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Carrossel com Mouse</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Carrossel Drag-and-Drop</title>
     <style>
         body {
             background-image: linear-gradient(to top right, #8B5CF6, #EC4899);
@@ -20,23 +19,28 @@
 
         .slider {
             position: relative;
-            width: 60%;
+            width: 100%;
             height: 370px;
             overflow: hidden;
             cursor: grab;
+            user-select:none;
         }
 
         .item {
             position: absolute;
-            width: 140px;
+            width: 200px;
             height: 320px;
             text-align: justify;
             background-color: #fff;
             border-radius: 10px;
             padding: 20px;
-            transition: 0.5s;
+            transition: transform 0.3s ease, opacity 0.3s ease;
             left: calc(50% - 110px);
             top: 0;
+        }
+
+        .slider.dragging {
+            cursor: grabbing;
         }
     </style>
 </head>
@@ -46,102 +50,119 @@
     <div class="slider">
         <div class="item">
             <h1>Slide 1</h1>
-            Lorem ipsum dolor sit amet consectetur, adipisicing elit. Facere magni magnam unde ipsam repudiandae
-            explicabo expedita labore, sequi minus neque beatae voluptatum, quasi accusamus quia quis voluptas laborum
-            ad! Ab totam doloribus, excepturi possimus rem vel quia fugit molestiae officiis!
+            Lorem ipsum dolor sit amet consectetur adipisicing elit. Facere magni magnam unde ipsam repudiandae
+            explicabo expedita labore.
         </div>
         <div class="item">
             <h1>Slide 2</h1>
-            Lorem ipsum dolor sit amet consectetur, adipisicing elit. Facere magni magnam unde ipsam repudiandae
-            explicabo expedita labore, sequi minus neque beatae voluptatum, quasi accusamus quia quis voluptas laborum
-            ad! Ab totam doloribus, excepturi possimus rem vel quia fugit molestiae officiis!
+            Lorem ipsum dolor sit amet consectetur adipisicing elit. Facere magni magnam unde ipsam repudiandae
+            explicabo expedita labore.
         </div>
         <div class="item">
             <h1>Slide 3</h1>
-            Lorem ipsum dolor sit amet consectetur, adipisicing elit. Facere magni magnam unde ipsam repudiandae
-            explicabo expedita labore, sequi minus neque beatae voluptatum, quasi accusamus quia quis voluptas laborum
-            ad! Ab totam doloribus, excepturi possimus rem vel quia fugit molestiae officiis!
+            Lorem ipsum dolor sit amet consectetur adipisicing elit. Facere magni magnam unde ipsam repudiandae
+            explicabo expedita labore.
         </div>
         <div class="item">
             <h1>Slide 4</h1>
-            Lorem ipsum dolor sit amet consectetur, adipisicing elit. Facere magni magnam unde ipsam repudiandae
-            explicabo expedita labore, sequi minus neque beatae voluptatum, quasi accusamus quia quis voluptas laborum
-            ad! Ab totam doloribus, excepturi possimus rem vel quia fugit molestiae officiis!
-        </div>
-        <div class="item">
-            <h1>Slide 5</h1>
-            Lorem ipsum dolor sit amet consectetur, adipisicing elit. Facere magni magnam unde ipsam repudiandae
-            explicabo expedita labore, sequi minus neque beatae voluptatum, quasi accusamus quia quis voluptas laborum
-            ad! Ab totam doloribus, excepturi possimus rem vel quia fugit molestiae officiis!
+            Lorem ipsum dolor sit amet consectetur adipisicing elit. Facere magni magnam unde ipsam repudiandae
+            explicabo expedita labore.
         </div>
     </div>
 
     <script>
         let items = document.querySelectorAll('.slider .item');
         let slider = document.querySelector('.slider');
-
-        let active = 2; // Slide inicial
+        let active = 0;
         let isDragging = false;
         let startX = 0;
-        let currentX = 0;
+        let currentTranslate = 0;
+        let prevTranslate = 0;
+        let animationID = 0;
 
         function loadShow() {
-            let offset = 0;
-            items[active].style.transform = `none`;
+            let stt = 0;
+
+            // Exibir o slide ativo no centro
+            items[active].style.transform = `translateX(${currentTranslate}px)`;
             items[active].style.zIndex = 1;
-            items[active].style.filter = 'none';
             items[active].style.opacity = 1;
-            for (let i = active + 1; i < items.length; i++) {
-                offset++;
-                items[i].style.transform = `translateX(${120 * offset}px) scale(${1 - 0.2 * offset})`;
-                items[i].style.zIndex = -offset;
-                items[i].style.filter = 'blur(5px)';
-                items[i].style.opacity = offset > 2 ? 0 : 0.6;
+
+            // Exibir os slides à direita
+            for (let i = 1; i < items.length; i++) {
+                let index = (active + i) % items.length;
+                stt++;
+                items[index].style.transform = `translateX(${120 * stt}px) scale(${1 - 0.2 * stt})`;
+                items[index].style.zIndex = -stt;
+                items[index].style.opacity = stt > 2 ? 0 : 0.6;
             }
-            offset = 0;
-            for (let i = active - 1; i >= 0; i--) {
-                offset++;
-                items[i].style.transform = `translateX(${-120 * offset}px) scale(${1 - 0.2 * offset})`;
-                items[i].style.zIndex = -offset;
-                items[i].style.filter = 'blur(5px)';
-                items[i].style.opacity = offset > 2 ? 0 : 0.6;
+
+            // Exibir os slides à esquerda
+            stt = 0;
+            for (let i = 1; i < items.length; i++) {
+                let index = (active - i + items.length) % items.length;
+                stt++;
+                items[index].style.transform = `translateX(${-120 * stt}px) scale(${1 - 0.2 * stt})`;
+                items[index].style.zIndex = -stt;
+                items[index].style.opacity = stt > 2 ? 0 : 0.6;
             }
         }
 
-        loadShow();
+        // Eventos de drag
+        slider.addEventListener('mousedown', startDrag);
+        slider.addEventListener('mousemove', drag);
+        slider.addEventListener('mouseup', endDrag);
+        slider.addEventListener('mouseleave', endDrag);
+        slider.addEventListener('touchstart', startDrag);
+        slider.addEventListener('touchmove', drag);
+        slider.addEventListener('touchend', endDrag);
 
-        slider.addEventListener('mousedown', (e) => {
+        function startDrag(event) {
             isDragging = true;
-            startX = e.clientX;
-            slider.style.cursor = 'grabbing';
-        });
+            slider.classList.add('dragging');
+            startX = getPositionX(event);
+            animationID = requestAnimationFrame(animation);
+        }
 
-        slider.addEventListener('mousemove', (e) => {
+        function drag(event) {
             if (!isDragging) return;
-            currentX = e.clientX;
-        });
 
-        slider.addEventListener('mouseup', (e) => {
+            const currentPosition = getPositionX(event);
+            currentTranslate = prevTranslate + currentPosition - startX;
+
+            // Atualizar apenas o card ativo
+            items[active].style.transform = `translateX(${currentTranslate}px)`;
+        }
+
+        function endDrag() {
             if (!isDragging) return;
             isDragging = false;
-            slider.style.cursor = 'grab';
+            slider.classList.remove('dragging');
 
-            let delta = currentX - startX;
-            if (delta > 50) {
-                // Mover para o slide anterior
-                active = active - 1 >= 0 ? active - 1 : active;
-            } else if (delta < -50) {
-                // Mover para o próximo slide
-                active = active + 1 < items.length ? active + 1 : active;
+            // Decidir se move para o próximo ou volta ao atual
+            const movedBy = currentTranslate - prevTranslate;
+            if (movedBy < -50) {
+                active = (active + 1) % items.length;
+            } else if (movedBy > 50) {
+                active = (active - 1 + items.length) % items.length;
             }
+            currentTranslate = 0;
+            prevTranslate = 0;
+            cancelAnimationFrame(animationID);
             loadShow();
-        });
+        }
 
-        slider.addEventListener('mouseleave', () => {
-            isDragging = false;
-            slider.style.cursor = 'grab';
-        });
+        function getPositionX(event) {
+            return event.type.includes('mouse') ? event.pageX : event.touches[0].clientX;
+        }
+
+        function animation() {
+            if (isDragging) requestAnimationFrame(animation);
+        }
+
+        loadShow();
     </script>
+
 </body>
 
 </html>
