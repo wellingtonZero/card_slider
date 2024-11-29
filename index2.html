@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrossel em Loop</title>
+    <style>
+        body {
+            background-image: linear-gradient(to top right, #8B5CF6, #EC4899);
+            min-height: 100vh;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: monospace;
+        }
+
+        .slider {
+            position: relative;
+            width: 100%;
+            height: 370px;
+            overflow: hidden;
+        }
+
+        .item {
+            position: absolute;
+            width: 200px;
+            height: 320px;
+            text-align: justify;
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            transition: 0.5s;
+            left: calc(50% - 110px);
+            top: 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="slider">
+        <div class="item">
+            <h1>Slide 1</h1>
+            Lorem ipsum dolor sit amet consectetur adipisicing elit. Facere magni magnam unde ipsam repudiandae
+            explicabo expedita labore.
+        </div>
+        <div class="item">
+            <h1>Slide 2</h1>
+            Lorem ipsum dolor sit amet consectetur adipisicing elit. Facere magni magnam unde ipsam repudiandae
+            explicabo expedita labore.
+        </div>
+        <div class="item">
+            <h1>Slide 3</h1>
+            Lorem ipsum dolor sit amet consectetur adipisicing elit. Facere magni magnam unde ipsam repudiandae
+            explicabo expedita labore.
+        </div>
+        <div class="item">
+            <h1>Slide 4</h1>
+            Lorem ipsum dolor sit amet consectetur adipisicing elit. Facere magni magnam unde ipsam repudiandae
+            explicabo expedita labore.
+        </div>
+    </div>
+
+    <script>
+        let items = document.querySelectorAll('.slider .item');
+        let active = 0;
+
+        function loadShow() {
+            let stt = 0;
+
+            // Exibir o slide ativo no centro
+            items[active].style.transform = `none`;
+            items[active].style.zIndex = 1;
+            items[active].style.filter = 'none';
+            items[active].style.opacity = 1;
+
+            // Exibir os slides à direita
+            for (let i = 1; i < items.length; i++) {
+                let index = (active + i) % items.length;
+                stt++;
+                items[index].style.transform = `translateX(${120 * stt}px) scale(${1 - 0.2 * stt}) perspective(16px) rotateY(-1deg)`;
+                items[index].style.zIndex = -stt;
+                items[index].style.filter = 'blur(5px)';
+                items[index].style.opacity = stt > 2 ? 0 : 0.6;
+            }
+
+            // Exibir os slides à esquerda
+            stt = 0;
+            for (let i = 1; i < items.length; i++) {
+                let index = (active - i + items.length) % items.length;
+                stt++;
+                items[index].style.transform = `translateX(${-120 * stt}px) scale(${1 - 0.2 * stt}) perspective(16px) rotateY(1deg)`;
+                items[index].style.zIndex = -stt;
+                items[index].style.filter = 'blur(5px)';
+                items[index].style.opacity = stt > 2 ? 0 : 0.6;
+            }
+        }
+
+        function nextSlide() {
+            active = (active + 1) % items.length;
+            loadShow();
+        }
+
+        function prevSlide() {
+            active = (active - 1 + items.length) % items.length;
+            loadShow();
+        }
+
+        // Adicionar eventos para navegação com o mouse
+        document.querySelector('.slider').addEventListener('wheel', (event) => {
+            if (event.deltaY > 0) nextSlide();
+            else prevSlide();
+        });
+
+        loadShow();
+    </script>
+
+</body>
+
+</html>
